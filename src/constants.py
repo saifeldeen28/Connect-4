@@ -1,0 +1,10 @@
+ROW_COUNT = 6
+COLUMN_COUNT = 7
+SQUARE_SIZE = 100
+
+width = COLUMN_COUNT * SQUARE_SIZE
+height = (ROW_COUNT + 1) * SQUARE_SIZE
+size = (width, height)
+RADIUS = int(SQUARE_SIZE / 2 - 5)
+
+ORANGE = (255, 69, 0)

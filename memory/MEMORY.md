@@ -1,0 +1,1 @@
+- [Project structure](project_structure.md) — src/ package layout after refactor; entry point is connect4.py

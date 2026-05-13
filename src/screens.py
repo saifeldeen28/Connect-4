@@ -1,5 +1,4 @@
 import math
-import random
 import sys
 import pygame
 
@@ -8,6 +7,7 @@ from .display import screen, font, rules, main_bg, dark_bg
 from .board import create_board, drop_piece, valid_location, get_next_open_row, check_win, check_draw, print_board
 from .renderer import draw_board, pause_page
 from .persistence import check_name, save_game, load_game
+from .transposition import get_best_move_with_tt
 
 
 def main_menu():
@@ -385,13 +385,7 @@ def computer_page(file_name):
                         main_menu()
 
         if turn == 1 and run and not pause:
-            # TODO (Person 5): Replace random AI with the real AI.
-            # Step 1 — add this import at the top of this file (with the other imports):
-            #     from .transposition import get_best_move_with_tt
-            # Step 2 — replace the line below with:
-            #     col = get_best_move_with_tt(board, depth=5)
-            # Step 3 — remove `import random` from the top (it will no longer be used).
-            col = random.randint(0, COLUMN_COUNT - 1)
+            col = get_best_move_with_tt(board, depth=5)
             if valid_location(board, col):
                 pygame.time.wait(500)
                 row = get_next_open_row(board, col)

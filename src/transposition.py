@@ -1,17 +1,3 @@
-# Person 4 — Transposition Table (Dynamic Programming via Zobrist Hashing)
-# Task: Implement Zobrist hashing and a transposition table, then wire them
-#       into a new minimax_with_tt() that combines alpha-beta + DP caching.
-#
-# Why this matters:
-#   Connect Four's game tree has many transpositions — the same board position
-#   reachable by different move sequences.  Without a TT, minimax re-evaluates
-#   each such position from scratch.  With a TT, each unique board is evaluated
-#   at most once per depth level, drastically cutting redundant work.
-#
-# Zobrist hashing encodes a board as a single 64-bit integer by XOR-ing random
-# bitstrings for each (row, col, piece) triple that is occupied.  Because XOR
-# is its own inverse, updating the hash after one move is O(1).
-
 import random
 import copy
 import math
@@ -37,45 +23,36 @@ class ZobristHasher:
     """
 
     def __init__(self):
-        """
-        Build the random bitstring lookup table.
-
-        self.table[r][c][p] is a random 64-bit integer for row r, column c,
-        piece p (p ∈ {1, 2}).  Index 0 is unused (represents EMPTY).
-        """
-        # TODO: initialise self.table as a 3-D structure:
-        #   self.table = [
-        #       [ [0, random.getrandbits(64), random.getrandbits(64)]
-        #         for _ in range(COLUMN_COUNT) ]
-        #       for _ in range(ROW_COUNT)
-        #   ]
-        self.table = None
-        pass
+        # table[r][c][0] unused (EMPTY), [1] = P1 bitstring, [2] = P2 bitstring
+        self.table = [
+            [[0, random.getrandbits(64), random.getrandbits(64)]
+             for _ in range(COLUMN_COUNT)]
+            for _ in range(ROW_COUNT)
+        ]
 
     def hash_board(self, board):
         """
         Compute the Zobrist hash for an entire board from scratch.
 
         Args:
-            board: 6×7 2-D list
+            board: 6x7 2-D list
         Returns:
             int: 64-bit hash
         """
         h = 0
-        # TODO: for r in range(ROW_COUNT):
-        #           for c in range(COLUMN_COUNT):
-        #               piece = board[r][c]
-        #               if piece != EMPTY:
-        #                   h ^= self.table[r][c][piece]
-        # TODO: return h
-        pass
+        for r in range(ROW_COUNT):
+            for c in range(COLUMN_COUNT):
+                piece = board[r][c]
+                if piece != EMPTY:
+                    h ^= self.table[r][c][piece]
+        return h
 
     def update_hash(self, current_hash, row, col, piece):
         """
         Incrementally update the hash after placing (or removing) a piece.
 
-        XOR is its own inverse: XOR-ing the same value twice returns the
-        original, so this method works for both placing and removing a piece.
+        XOR is its own inverse: XOR-ing the same value twice restores the
+        original hash, so this method works for both placing and undoing moves.
 
         Args:
             current_hash : int, the hash before the move
@@ -84,30 +61,21 @@ class ZobristHasher:
         Returns:
             int: updated hash
         """
-        # TODO: return current_hash ^ self.table[row][col][piece]
-        pass
+        return current_hash ^ self.table[row][col][piece]
 
 
 class TranspositionTable:
     """
     Dictionary-backed cache mapping Zobrist hashes to evaluated scores.
 
-    Each entry is a dict:
-        {'score': int, 'depth': int, 'flag': str}
-
-    The 'flag' field encodes how precise the stored score is:
-        'EXACT'      — the score is exact at this depth
-        'LOWERBOUND' — the true score is >= stored score (beta cutoff occurred)
-        'UPPERBOUND' — the true score is <= stored score (alpha cutoff occurred)
-
-    Use flags to correctly handle entries from earlier alpha-beta cutoffs.
-    For simplicity, your initial implementation may store only 'EXACT' entries.
+    Each entry: {'score': int, 'depth': int, 'flag': str}
+    flag: 'EXACT' | 'LOWERBOUND' | 'UPPERBOUND'
     """
 
     def __init__(self):
         self.table = {}
-        self.hits = 0    # number of successful cache retrievals
-        self.misses = 0  # number of cache misses
+        self.hits = 0
+        self.misses = 0
 
     def lookup(self, board_hash):
         """
@@ -118,17 +86,19 @@ class TranspositionTable:
         Returns:
             dict or None
         """
-        # TODO: entry = self.table.get(board_hash, None)
-        # TODO: if entry: self.hits += 1; else: self.misses += 1
-        # TODO: return entry
-        pass
+        entry = self.table.get(board_hash, None)
+        if entry is not None:
+            self.hits += 1
+        else:
+            self.misses += 1
+        return entry
 
     def store(self, board_hash, score, depth, flag='EXACT'):
         """
         Cache an evaluated position.
 
-        Only overwrite an existing entry if the new search depth is at least
-        as deep (deeper = more accurate).
+        Only overwrites an existing entry if the new depth is at least as deep
+        (deeper searches produce more accurate scores).
 
         Args:
             board_hash : int
@@ -136,9 +106,8 @@ class TranspositionTable:
             depth      : int
             flag       : str ('EXACT', 'LOWERBOUND', 'UPPERBOUND')
         """
-        # TODO: if board_hash not in self.table or depth >= self.table[board_hash]['depth']:
-        #           self.table[board_hash] = {'score': score, 'depth': depth, 'flag': flag}
-        pass
+        if board_hash not in self.table or depth >= self.table[board_hash]['depth']:
+            self.table[board_hash] = {'score': score, 'depth': depth, 'flag': flag}
 
     def get_stats(self):
         """Return a human-readable hit-rate string (useful for the project report)."""
@@ -154,24 +123,24 @@ class TranspositionTable:
 def minimax_with_tt(board, depth, alpha, beta, maximizing_player,
                     tt, zobrist, current_hash=None):
     """
-    Alpha-Beta Minimax with Transposition Table look-up and storage.
+    Alpha-Beta Minimax enhanced with Transposition Table look-up and storage.
 
     Algorithm:
         1. Compute (or accept) the current Zobrist hash.
         2. TT look-up — if a sufficiently deep entry exists, return it immediately.
-        3. Check base cases (terminal / depth 0) exactly as in alphabeta.py.
-        4. Recurse over ordered moves; compute each child's hash incrementally
-           using zobrist.update_hash() — NO deepcopy needed for the hash.
-        5. Before returning, store the result in the TT.
+        3. Check base cases (terminal / depth 0).
+        4. Recurse over center-ordered moves; compute each child's hash
+           incrementally using zobrist.update_hash() — O(1), no deepcopy for hash.
+        5. Store the result in the TT before returning.
 
     Args:
-        board             : 6×7 2-D list
+        board             : 6x7 2-D list
         depth             : int, remaining search depth
         alpha, beta       : float, pruning bounds
         maximizing_player : bool
         tt                : TranspositionTable instance
         zobrist           : ZobristHasher instance
-        current_hash      : int or None — computed from scratch if None
+        current_hash      : int or None (computed from scratch if None)
 
     Returns:
         tuple (best_column, best_score)
@@ -179,54 +148,71 @@ def minimax_with_tt(board, depth, alpha, beta, maximizing_player,
     if current_hash is None:
         current_hash = zobrist.hash_board(board)
 
-    # --- 1. Transposition Table look-up ---
-    # TODO: entry = tt.lookup(current_hash)
-    # TODO: if entry is not None and entry['depth'] >= depth:
-    #           return (None, entry['score'])   # cached — skip re-evaluation
+    # TT look-up
+    entry = tt.lookup(current_hash)
+    if entry is not None and entry['depth'] >= depth:
+        return (None, entry['score'])
 
     valid_locations = get_ordered_moves(board)
     terminal = is_terminal_node(board)
 
-    # --- 2. Base cases ---
     if terminal:
-        # TODO: same terminal scoring as alphabeta.py — store in TT then return
-        pass
+        if check_win(board, AI_PIECE):
+            score = 1_000_000
+        elif check_win(board, PLAYER_PIECE):
+            score = -1_000_000
+        else:
+            score = 0
+        tt.store(current_hash, score, depth)
+        return (None, score)
 
     if depth == 0:
-        # TODO: leaf_score = score_position(board, AI_PIECE)
-        # TODO: tt.store(current_hash, leaf_score, depth)
-        # TODO: return (None, leaf_score)
-        pass
+        leaf_score = score_position(board, AI_PIECE)
+        tt.store(current_hash, leaf_score, depth)
+        return (None, leaf_score)
 
-    # --- 3. Maximizing (AI's turn) ---
     if maximizing_player:
         best_score = -math.inf
         best_col = valid_locations[0]
 
         for col in valid_locations:
-            # TODO: b_copy = copy.deepcopy(board)
-            # TODO: row = get_next_open_row(b_copy, col)
-            # TODO: drop_piece(b_copy, row, col, AI_PIECE)
-            # TODO: child_hash = zobrist.update_hash(current_hash, row, col, AI_PIECE)
-            # TODO: _, new_score = minimax_with_tt(b_copy, depth-1, alpha, beta,
-            #                                       False, tt, zobrist, child_hash)
-            # TODO: track best_score / best_col, update alpha, prune if alpha >= beta
-            pass
+            b_copy = copy.deepcopy(board)
+            row = get_next_open_row(b_copy, col)
+            drop_piece(b_copy, row, col, AI_PIECE)
+            child_hash = zobrist.update_hash(current_hash, row, col, AI_PIECE)
+            _, new_score = minimax_with_tt(
+                b_copy, depth - 1, alpha, beta, False, tt, zobrist, child_hash
+            )
+            if new_score > best_score:
+                best_score = new_score
+                best_col = col
+            alpha = max(alpha, best_score)
+            if alpha >= beta:
+                break
 
-        # TODO: tt.store(current_hash, best_score, depth)
+        tt.store(current_hash, best_score, depth)
         return best_col, best_score
 
-    # --- 4. Minimizing (human's turn) ---
     else:
         best_score = math.inf
         best_col = valid_locations[0]
 
         for col in valid_locations:
-            # TODO: simulate PLAYER_PIECE move and recurse (maximizing_player=True)
-            # TODO: track best_score / best_col, update beta, prune if alpha >= beta
-            pass
+            b_copy = copy.deepcopy(board)
+            row = get_next_open_row(b_copy, col)
+            drop_piece(b_copy, row, col, PLAYER_PIECE)
+            child_hash = zobrist.update_hash(current_hash, row, col, PLAYER_PIECE)
+            _, new_score = minimax_with_tt(
+                b_copy, depth - 1, alpha, beta, True, tt, zobrist, child_hash
+            )
+            if new_score < best_score:
+                best_score = new_score
+                best_col = col
+            beta = min(beta, best_score)
+            if alpha >= beta:
+                break
 
-        # TODO: tt.store(current_hash, best_score, depth)
+        tt.store(current_hash, best_score, depth)
         return best_col, best_score
 
 
@@ -234,19 +220,16 @@ def get_best_move_with_tt(board, depth=5):
     """
     Entry point for the full AI (alpha-beta + transposition table).
 
-    This is the function that src/screens.py will call to replace random moves.
+    This is the function called by src/screens.py to replace random moves.
 
     Args:
-        board : 6×7 2-D list
+        board : 6x7 2-D list
         depth : int (default 5)
 
     Returns:
         int: best column index for the AI to play
     """
-    # TODO: zobrist = ZobristHasher()
-    # TODO: tt = TranspositionTable()
-    # TODO: col, _ = minimax_with_tt(board, depth, -math.inf, math.inf,
-    #                                 True, tt, zobrist)
-    # TODO: (optional) print(tt.get_stats()) for debugging
-    # TODO: return col
-    pass
+    zobrist = ZobristHasher()
+    tt = TranspositionTable()
+    col, _ = minimax_with_tt(board, depth, -math.inf, math.inf, True, tt, zobrist)
+    return col

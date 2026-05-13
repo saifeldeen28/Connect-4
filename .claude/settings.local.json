@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Move-Item *)"
+      "PowerShell(Move-Item *)",
+      "Bash(Get-ChildItem -Recurse -Path \"D:\\\\uni\\\\connect4\\\\Connect-4\" -Filter \"*.py\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

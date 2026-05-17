@@ -5,13 +5,12 @@
       "Bash(Get-ChildItem -Recurse -Path \"D:\\\\uni\\\\connect4\\\\Connect-4\" -Filter \"*.py\")",
       "Bash(Select-Object FullName)",
       "Bash(python tests/test_cases.py)",
-      "Bash(python -c ' *)",
-      "Bash(python *)",
-      "Bash(pip install *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
       "Bash(git add *)",
+      "Bash(git restore *)",
       "Bash(git commit -m ' *)",
-      "Bash(git checkout *)",
-      "Bash(git merge *)"
+      "Bash(git push *)"
     ]
   }
 }

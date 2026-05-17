@@ -57,9 +57,9 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player):
 
     if terminal:
         if check_win(board, AI_PIECE):
-            return (None, 1_000_000)
+            return (None, 1_000_000 + depth)
         elif check_win(board, PLAYER_PIECE):
-            return (None, -1_000_000)
+            return (None, -1_000_000 - depth)
         else:
             return (None, 0)
 

@@ -158,9 +158,9 @@ def minimax_with_tt(board, depth, alpha, beta, maximizing_player,
 
     if terminal:
         if check_win(board, AI_PIECE):
-            score = 1_000_000
+            score = 1_000_000 + depth
         elif check_win(board, PLAYER_PIECE):
-            score = -1_000_000
+            score = -1_000_000 - depth
         else:
             score = 0
         tt.store(current_hash, score, depth)

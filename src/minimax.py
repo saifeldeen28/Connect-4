@@ -11,14 +11,6 @@ EMPTY = 0
 
 
 def is_terminal_node(board):
-    """
-    Return True if the game is over (either player has won, or board is full).
-
-    Args:
-        board: 6x7 2-D list
-    Returns:
-        bool
-    """
     return (
         check_win(board, PLAYER_PIECE)
         or check_win(board, AI_PIECE)
@@ -27,38 +19,10 @@ def is_terminal_node(board):
 
 
 def get_valid_locations(board):
-    """
-    Return all columns that still have at least one empty cell.
-
-    Args:
-        board: 6x7 2-D list
-    Returns:
-        list[int]: valid column indices (0-6)
-    """
     return [col for col in range(COLUMN_COUNT) if valid_location(board, col)]
 
 
 def minimax(board, depth, maximizing_player):
-    """
-    Recursive minimax with a depth limit. No pruning.
-
-    Base cases:
-        - Terminal node  -> return (None, large positive/negative score or 0 for draw)
-        - depth == 0     -> return (None, score_position(board, AI_PIECE))
-
-    Recursive cases:
-        - maximizing_player == True  -> choose column with HIGHEST child score
-        - maximizing_player == False -> choose column with LOWEST child score
-
-    Args:
-        board             : 6x7 2-D list (current state)
-        depth             : int, remaining search depth
-        maximizing_player : bool, True when it is the AI's turn
-
-    Returns:
-        tuple (best_column, best_score)
-            best_column is None at leaf nodes (caller ignores it there)
-    """
     valid_locations = get_valid_locations(board)
     terminal = is_terminal_node(board)
 
@@ -105,15 +69,5 @@ def minimax(board, depth, maximizing_player):
 
 
 def get_best_move(board, depth=4):
-    """
-    Entry point for pure minimax AI.
-
-    Args:
-        board : 6x7 2-D list
-        depth : int, search depth (default 4)
-
-    Returns:
-        int: best column index for the AI to play
-    """
     col, _ = minimax(board, depth, True)
     return col

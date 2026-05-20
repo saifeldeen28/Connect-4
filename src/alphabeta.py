@@ -12,19 +12,6 @@ EMPTY = 0
 
 
 def get_ordered_moves(board):
-    """
-    Return valid column indices sorted by proximity to the center column.
-
-    For a 7-column board the order is: [3, 2, 4, 1, 5, 0, 6]
-    Trying center columns first maximises the probability of an alpha-beta
-    cutoff on the very first child, effectively doubling usable search depth.
-
-    Args:
-        board: 6x7 2-D list
-
-    Returns:
-        list[int]: valid column indices ordered center-first
-    """
     center = COLUMN_COUNT // 2
     return sorted(
         [c for c in range(COLUMN_COUNT) if valid_location(board, c)],
@@ -33,25 +20,6 @@ def get_ordered_moves(board):
 
 
 def minimax_alphabeta(board, depth, alpha, beta, maximizing_player):
-    """
-    Minimax with Alpha-Beta Pruning.
-
-    Identical logic to minimax() in minimax.py except:
-        - Uses get_ordered_moves() instead of get_valid_locations()
-        - After each child evaluation:
-              maximizing: alpha = max(alpha, score); prune if alpha >= beta
-              minimizing: beta  = min(beta,  score); prune if alpha >= beta
-
-    Args:
-        board             : 6x7 2-D list
-        depth             : int, remaining search depth
-        alpha             : float, best score the maximizer can guarantee (-inf at root)
-        beta              : float, best score the minimizer can guarantee (+inf at root)
-        maximizing_player : bool
-
-    Returns:
-        tuple (best_column, best_score)
-    """
     valid_locations = get_ordered_moves(board)
     terminal = is_terminal_node(board)
 
@@ -104,18 +72,5 @@ def minimax_alphabeta(board, depth, alpha, beta, maximizing_player):
 
 
 def get_best_move_alphabeta(board, depth=5):
-    """
-    Entry point for the alpha-beta AI.
-
-    Uses a deeper default depth than pure minimax (5 vs 4) because pruning
-    makes the extra depth affordable in practice.
-
-    Args:
-        board : 6x7 2-D list
-        depth : int (default 5)
-
-    Returns:
-        int: best column index for the AI to play
-    """
     col, _ = minimax_alphabeta(board, depth, -math.inf, math.inf, True)
     return col

@@ -1,11 +1,12 @@
 import math
+import random
 import sys
 import pygame
 
 from .constants import COLUMN_COUNT, SQUARE_SIZE, RADIUS, width, ORANGE
 from .display import screen, font, rules, main_bg, dark_bg
 from .board import create_board, drop_piece, valid_location, get_next_open_row, check_win, check_draw, print_board
-from .renderer import draw_board, pause_page
+from .renderer import draw_board, pause_page, result_banner
 from .persistence import check_name, save_game, load_game
 from .transposition import get_best_move_with_tt
 
@@ -304,11 +305,11 @@ def play_page(file_name):
                         draw_board(board)
 
                         if check_win(board, piece):
-                            pygame.display.flip()
+                            result_banner(f'Player {piece} Wins!')
                             win_page(piece, file_name)
 
                         if check_draw(board):
-                            pygame.display.flip()
+                            result_banner("It's a Draw!")
                             draw_page(file_name)
 
                         turn = (turn + 1) % 2
@@ -329,7 +330,7 @@ def play_page(file_name):
 def computer_page(file_name):
     board = create_board()
     draw_board(board)
-    turn = 0
+    turn = random.randint(0, 1)
     pygame.display.flip()
     run = True
     pause = False
@@ -367,9 +368,11 @@ def computer_page(file_name):
                         pygame.display.flip()
 
                         if check_win(board, 1):
+                            result_banner('Player 1 Wins!')
                             win_page(1, file_name)
 
                         if check_draw(board):
+                            result_banner("It's a Draw!")
                             draw_page(file_name)
 
                         turn = 1
@@ -394,11 +397,11 @@ def computer_page(file_name):
                 draw_board(board)
 
                 if check_win(board, 2):
-                    pygame.display.flip()
+                    result_banner('Player 2 Wins!')
                     win_page(2, file_name)
 
                 if check_draw(board):
-                    pygame.display.flip()
+                    result_banner("It's a Draw!")
                     draw_page(file_name)
 
                 turn = 0
@@ -447,11 +450,11 @@ def continue_game(board, file_name):
                         draw_board(board)
 
                         if check_win(board, piece):
-                            pygame.display.flip()
+                            result_banner(f'Player {piece} Wins!')
                             win_page(piece, file_name)
 
                         if check_draw(board):
-                            pygame.display.flip()
+                            result_banner("It's a Draw!")
                             draw_page(file_name)
 
                         turn = (turn + 1) % 2

@@ -2,6 +2,27 @@ import pygame
 from .constants import ROW_COUNT, COLUMN_COUNT, SQUARE_SIZE, RADIUS, width, height, ORANGE
 from .display import screen, surface, font
 
+_banner_font = None
+
+
+def _get_banner_font():
+    global _banner_font
+    if _banner_font is None:
+        _banner_font = pygame.font.SysFont('Comic Sans MS', 60)
+    return _banner_font
+
+
+def result_banner(message):
+    bf = _get_banner_font()
+    overlay = pygame.Surface((width, height), pygame.SRCALPHA)
+    pygame.draw.rect(overlay, (0, 0, 0, 190), (40, height // 2 - 80, width - 80, 160), 0, 20)
+    text_surf = bf.render(message, True, 'white')
+    text_rect = text_surf.get_rect(center=(width // 2, height // 2))
+    overlay.blit(text_surf, text_rect)
+    screen.blit(overlay, (0, 0))
+    pygame.display.flip()
+    pygame.time.wait(5000)
+
 
 def draw_board(board):
     for col in range(COLUMN_COUNT):
